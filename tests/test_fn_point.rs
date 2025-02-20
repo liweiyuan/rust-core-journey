@@ -1,38 +1,34 @@
-use std::fmt::{Debug, Display};
-
 /// 学习测试函数指针
 /// 模拟一个查询的接口,先从缓存查询，如果不存在，查询数据库
 ///
+///
+use anyhow::{Context, Result};
 
-struct QueryEngine<T, R, E> {
+struct QueryEngine<T, R> {
     //cache
-    cache_query: fn(&T) -> Result<R, E>,
-
+    cache_query: fn(&T) -> Result<R>,
     //db
-    db_query: fn(&T) -> Result<R, E>,
+    db_query: fn(&T) -> Result<R>,
 }
 
 //模拟缓存查询
-fn cache_query(id: &i32) -> Result<String, String> {
+fn cache_query(id: &i32) -> Result<String> {
     if *id == 1 {
         Ok(String::from("cache"))
     } else {
-        Err(String::from("cache not found"))
+        anyhow::bail!("cache not found")
     }
 }
 
-fn db_query(id: &i32) -> Result<String, String> {
+fn db_query(id: &i32) -> Result<String> {
     match id {
         1 => Ok(String::from("db")),
         2 => Ok(String::from("db2")),
-        _ => Err(String::from("db not found")),
+        _ => anyhow::bail!("db not found"),
     }
 }
 
-fn query_order<T, R, E>(engine: &QueryEngine<T, R, E>, id: &T) -> Result<R, E>
-where
-    E: Debug + Display,
-{
+fn query_order<T, R>(engine: &QueryEngine<T, R>, id: &T) -> Result<R> {
     // 查询缓存
     match (engine.cache_query)(id) {
         Ok(cache) => return Ok(cache),
@@ -40,20 +36,22 @@ where
     }
 
     // 查询数据库
-    (engine.db_query)(id)
+    (engine.db_query)(id).context("Database query failed")
 }
 
 #[test]
-fn test_query() {
+fn test_query() -> Result<()> {
     let query_engine = QueryEngine {
         cache_query,
         db_query,
     };
 
-    assert_eq!(query_order(&query_engine, &1), Ok(String::from("cache")));
-    assert_eq!(query_order(&query_engine, &2), Ok(String::from("db2")));
-    assert_eq!(
-        query_order(&query_engine, &3),
-        Err("db not found".to_string())
-    );
+    assert_eq!(query_order(&query_engine, &1)?, String::from("cache"));
+    assert_eq!(query_order(&query_engine, &2)?, String::from("db2"));
+    match query_order(&query_engine, &3) {
+        Err(e) => assert_eq!(e.to_string(), "Database query failed"),
+        Ok(_) => panic!("Expected an error"),
+    }
+
+    Ok(())
 }
