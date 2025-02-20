@@ -4,41 +4,41 @@
 
 struct QueryEngine<T, R> {
     //cache
-    cache_query: fn(&T) -> Option<R>,
+    cache_query: fn(&T) -> Result<R, String>,
 
     //db
-    db_query: fn(&T) -> Option<R>,
+    db_query: fn(&T) -> Result<R, String>,
 }
 
 //模拟缓存查询
-fn cache_query(id: &i32) -> Option<String> {
+fn cache_query(id: &i32) -> Result<String, String> {
     if *id == 1 {
-        Some(String::from("cache"))
+        Ok(String::from("cache"))
     } else {
-        None
+        Err(String::from("cache not found"))
     }
 }
 
-//模拟数据库查询
-fn db_query(id: &i32) -> Option<String> {
+fn db_query(id: &i32) -> Result<String, String> {
     match id {
-        1 => Some(String::from("db")),
-        2 => Some(String::from("db2")),
-        _ => None,
+        1 => Ok(String::from("db")),
+        2 => Ok(String::from("db2")),
+        _ => Err(String::from("db not found")),
     }
 }
 
-fn query_order<T, R>(engine: &QueryEngine<T, R>, id: &T) -> Option<R> {
-    //查询缓存
-    if let Some(cache) = (engine.cache_query)(id) {
-        return Some(cache);
+fn query_order<T, R>(engine: &QueryEngine<T, R>, id: &T) -> Result<R, String> {
+    // 查询缓存
+    match (engine.cache_query)(id) {
+        Ok(cache) => return Ok(cache),
+        Err(_) => (), // 忽略缓存错误，继续查询数据库
     }
 
-    //查询数据库
-    if let Some(db) = (engine.db_query)(id) {
-        return Some(db);
+    // 查询数据库
+    match (engine.db_query)(id) {
+        Ok(db) => return Ok(db),
+        Err(e) => return Err(e), // 返回数据库查询错误
     }
-    None
 }
 
 #[test]
@@ -48,7 +48,10 @@ fn test_query() {
         db_query,
     };
 
-    assert_eq!(query_order(&query_engine, &1), Some(String::from("cache")));
-    assert_eq!(query_order(&query_engine, &2), Some(String::from("db2")));
-    assert_eq!(query_order(&query_engine, &3), None);
+    assert_eq!(query_order(&query_engine, &1), Ok(String::from("cache")));
+    assert_eq!(query_order(&query_engine, &2), Ok(String::from("db2")));
+    assert_eq!(
+        query_order(&query_engine, &3),
+        Err("db not found".to_string())
+    );
 }
