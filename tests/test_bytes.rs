@@ -54,3 +54,18 @@ fn test_file_use_bytes() -> Result<()> {
     //写入文件
     write_file(output_path, &data)
 }
+
+//增加一个文件不存在的校验
+#[test]
+fn test_file_not_exist() -> Result<()> {
+    //打开文件
+    let input_path = "tests/inputs/input_bytes_not_exist.txt";
+    //读取文件,使用上面的方法
+    let result = read_file(input_path);
+    assert!(result.is_err());
+
+    if let Err(e) = result {
+        assert_eq!(e.to_string(), "No such file or directory (os error 2)");
+    }
+    Ok(())
+}
