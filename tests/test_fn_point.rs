@@ -2,17 +2,17 @@
 /// 模拟一个查询的接口,先从缓存查询，如果不存在，查询数据库
 ///
 
-struct QueryEngine {
+struct QueryEngine<T, R> {
     //cache
-    cache_query: fn(i32) -> Option<String>,
+    cache_query: fn(&T) -> Option<R>,
 
     //db
-    db_query: fn(i32) -> Option<String>,
+    db_query: fn(&T) -> Option<R>,
 }
 
 //模拟缓存查询
-fn cache_query(id: i32) -> Option<String> {
-    if id == 1 {
+fn cache_query(id: &i32) -> Option<String> {
+    if *id == 1 {
         Some(String::from("cache"))
     } else {
         None
@@ -20,7 +20,7 @@ fn cache_query(id: i32) -> Option<String> {
 }
 
 //模拟数据库查询
-fn db_query(id: i32) -> Option<String> {
+fn db_query(id: &i32) -> Option<String> {
     match id {
         1 => Some(String::from("db")),
         2 => Some(String::from("db2")),
@@ -28,7 +28,7 @@ fn db_query(id: i32) -> Option<String> {
     }
 }
 
-fn query_order(engine: &QueryEngine, id: i32) -> Option<String> {
+fn query_order<T, R>(engine: &QueryEngine<T, R>, id: &T) -> Option<R> {
     //查询缓存
     if let Some(cache) = (engine.cache_query)(id) {
         return Some(cache);
@@ -48,7 +48,7 @@ fn test_query() {
         db_query,
     };
 
-    assert_eq!(query_order(&query_engine, 1), Some(String::from("cache")));
-    assert_eq!(query_order(&query_engine, 2), Some(String::from("db2")));
-    assert_eq!(query_order(&query_engine, 3), None);
+    assert_eq!(query_order(&query_engine, &1), Some(String::from("cache")));
+    assert_eq!(query_order(&query_engine, &2), Some(String::from("db2")));
+    assert_eq!(query_order(&query_engine, &3), None);
 }
