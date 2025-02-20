@@ -26,12 +26,15 @@ fn read_file(path: &str) -> Result<BytesMut> {
 
     let mut temp = [0u8; 512]; // 临时缓冲区
 
-    while let Ok(n) = reader.read(&mut temp) {
+    loop{
+        let n = reader.read(&mut temp)?;
         if n == 0 {
             break;
         }
-        buf.put(&temp[..n]); // 将数据放入 BytesMut
+        buf.reserve(n);
+        buf.put(&temp[..n]);
     }
+
     buf.iter_mut().for_each(|b| *b = b.to_ascii_uppercase());
     Ok(buf)
 }
