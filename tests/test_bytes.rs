@@ -2,8 +2,8 @@
 /// 学习使用bytes库来读写文件
 ///
 ///
-use anyhow::{Ok, Result};
-use bytes::BytesMut;
+use anyhow::{Context, Result};
+use bytes::{BufMut, BytesMut};
 use std::{
     fs::File,
     io::{BufReader, Read, Write},
@@ -12,29 +12,28 @@ use std::{
 //文件打开操作
 fn open_file(path: &str, write_mode: bool) -> Result<File> {
     if write_mode {
-        Ok(File::create(path)?)
+        File::create(path).with_context(|| format!("Failed to create file: {}", path))
     } else {
-        Ok(File::open(path)?)
+        File::open(path).with_context(|| format!("Failed to open file: {}", path))
     }
 }
 
 //读取文件
-fn read_file(path: &str) -> Result<Vec<u8>> {
+fn read_file(path: &str) -> Result<BytesMut> {
     let file = open_file(path, false)?;
     let mut reader = BufReader::new(file);
     let mut buf = BytesMut::with_capacity(1024);
-    let mut processed_data = Vec::new();
-    loop {
-        buf.resize(1024, 0); // 确保缓冲区大小
-        let n = reader.read(&mut buf)?;
+
+    let mut temp = [0u8; 512]; // 临时缓冲区
+
+    while let Ok(n) = reader.read(&mut temp) {
         if n == 0 {
             break;
         }
-        buf.resize(n, 0); // 调整缓冲区大小为实际读取的大小
-                          //转为大写,放入到processed_data中
-        processed_data.extend(buf.iter().map(|b| b.to_ascii_uppercase()));
+        buf.put(&temp[..n]); // 将数据放入 BytesMut
     }
-    Ok(processed_data)
+    buf.iter_mut().for_each(|b| *b = b.to_ascii_uppercase());
+    Ok(buf)
 }
 
 //写入文件
@@ -65,7 +64,10 @@ fn test_file_not_exist() -> Result<()> {
     assert!(result.is_err());
 
     if let Err(e) = result {
-        assert_eq!(e.to_string(), "No such file or directory (os error 2)");
+        assert_eq!(
+            e.to_string(),
+            format!("Failed to open file: {}", input_path)
+        );
     }
     Ok(())
 }
