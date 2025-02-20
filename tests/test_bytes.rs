@@ -6,7 +6,7 @@ use anyhow::{Ok, Result};
 use bytes::BytesMut;
 use std::{
     fs::File,
-    io::{Read, Write},
+    io::{BufReader, Read, Write},
 };
 
 //文件打开操作
@@ -20,12 +20,13 @@ fn open_file(path: &str, write_mode: bool) -> Result<File> {
 
 //读取文件
 fn read_file(path: &str) -> Result<Vec<u8>> {
-    let mut file = open_file(path, false)?;
+    let file = open_file(path, false)?;
+    let mut reader = BufReader::new(file);
     let mut buf = BytesMut::with_capacity(1024);
     let mut processed_data = Vec::new();
     loop {
         buf.resize(1024, 0); // 确保缓冲区大小
-        let n = file.read(&mut buf)?;
+        let n = reader.read(&mut buf)?;
         if n == 0 {
             break;
         }
