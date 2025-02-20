@@ -46,6 +46,7 @@ fn test_query() -> Result<()> {
         db_query,
     };
 
+    //传递的是引用
     assert_eq!(query_order(&query_engine, &1)?, String::from("cache"));
     assert_eq!(query_order(&query_engine, &2)?, String::from("db2"));
     match query_order(&query_engine, &3) {
