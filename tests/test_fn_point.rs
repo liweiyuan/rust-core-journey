@@ -1,13 +1,15 @@
+use std::fmt::{Debug, Display};
+
 /// 学习测试函数指针
 /// 模拟一个查询的接口,先从缓存查询，如果不存在，查询数据库
 ///
 
-struct QueryEngine<T, R> {
+struct QueryEngine<T, R, E> {
     //cache
-    cache_query: fn(&T) -> Result<R, String>,
+    cache_query: fn(&T) -> Result<R, E>,
 
     //db
-    db_query: fn(&T) -> Result<R, String>,
+    db_query: fn(&T) -> Result<R, E>,
 }
 
 //模拟缓存查询
@@ -27,7 +29,10 @@ fn db_query(id: &i32) -> Result<String, String> {
     }
 }
 
-fn query_order<T, R>(engine: &QueryEngine<T, R>, id: &T) -> Result<R, String> {
+fn query_order<T, R, E>(engine: &QueryEngine<T, R, E>, id: &T) -> Result<R, E>
+where
+    E: Debug + Display,
+{
     // 查询缓存
     match (engine.cache_query)(id) {
         Ok(cache) => return Ok(cache),
@@ -35,10 +40,7 @@ fn query_order<T, R>(engine: &QueryEngine<T, R>, id: &T) -> Result<R, String> {
     }
 
     // 查询数据库
-    match (engine.db_query)(id) {
-        Ok(db) => return Ok(db),
-        Err(e) => return Err(e), // 返回数据库查询错误
-    }
+    (engine.db_query)(id)
 }
 
 #[test]
