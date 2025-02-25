@@ -5,9 +5,7 @@
 use anyhow::{Context, Result};
 
 struct QueryEngine<T, R> {
-    //cache
     cache_query: fn(&T) -> Result<R>,
-    //db
     db_query: fn(&T) -> Result<R>,
 }
 
@@ -56,3 +54,5 @@ fn test_query() -> Result<()> {
 
     Ok(())
 }
+
+// todo, 通过抽象cache_query与db_query来扩展这个业务，方便后续扩展不同的业务
