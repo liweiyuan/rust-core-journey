@@ -7,8 +7,8 @@ use rust_core_journey::{cache_query, db_query, query_order, QueryEngine};
 #[test]
 fn test_query() -> Result<()> {
     let query_engine = QueryEngine {
-        cache_query,
-        db_query,
+        cache: cache_query,
+        db: db_query,
     };
 
     //传递的是引用
