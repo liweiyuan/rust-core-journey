@@ -2,41 +2,8 @@
 /// 模拟一个查询的接口,先从缓存查询，如果不存在，查询数据库
 ///
 ///
-use anyhow::{Context, Result};
-
-struct QueryEngine<T, R> {
-    cache_query: fn(&T) -> Result<R>,
-    db_query: fn(&T) -> Result<R>,
-}
-
-//模拟缓存查询
-fn cache_query(id: &i32) -> Result<String> {
-    if *id == 1 {
-        Ok(String::from("cache"))
-    } else {
-        anyhow::bail!("cache not found")
-    }
-}
-
-fn db_query(id: &i32) -> Result<String> {
-    match id {
-        1 => Ok(String::from("db")),
-        2 => Ok(String::from("db2")),
-        _ => anyhow::bail!("db not found"),
-    }
-}
-
-fn query_order<T, R>(engine: &QueryEngine<T, R>, id: &T) -> Result<R> {
-    // 查询缓存
-    match (engine.cache_query)(id) {
-        Ok(cache) => return Ok(cache),
-        Err(_) => (), // 忽略缓存错误，继续查询数据库
-    }
-
-    // 查询数据库
-    (engine.db_query)(id).context("Database query failed")
-}
-
+use anyhow::Result;
+use rust_core_journey::{cache_query, db_query, query_order, QueryEngine};
 #[test]
 fn test_query() -> Result<()> {
     let query_engine = QueryEngine {
@@ -54,5 +21,3 @@ fn test_query() -> Result<()> {
 
     Ok(())
 }
-
-// todo, 通过抽象cache_query与db_query来扩展这个业务，方便后续扩展不同的业务
