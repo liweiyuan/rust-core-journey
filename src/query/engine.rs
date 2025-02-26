@@ -1,8 +1,9 @@
-use crate::query::LocalCacheQuery;
 use anyhow::{Context, Result};
 
-//use super::EngineType;
-use super::{CacheQuery, DbQuery, LocalDbQuery};
+use crate::{
+    cache::LocalCacheQuery, cache::RedisCacheQuery, db::LocalDbQuery, db::MySqlDbQuery, CacheQuery,
+    DbQuery,
+};
 
 pub struct QueryEngine<T, R> {
     pub cache: fn(&T) -> Result<R>,
@@ -15,6 +16,7 @@ pub enum EngineType {
     Redis,
     MySql,
     Oracle,
+    Other,
 }
 
 #[derive(PartialEq, Eq)]
@@ -26,9 +28,13 @@ pub enum QueryType {
 
 pub fn cache_query(cache_type: &QueryType) -> Result<String> {
     match cache_type {
-        QueryType::Default(_, _) => {
+        QueryType::Default(a, _) if a == &EngineType::Local => {
             let cache = LocalCacheQuery {};
             cache.cache_query(&1)
+        }
+        QueryType::Default(a, _) if a == &EngineType::Redis => {
+            let cache = RedisCacheQuery {};
+            cache.cache_query(&"1".to_string())
         }
         _ => Err(anyhow::anyhow!("not supported cache type")),
     }
@@ -36,9 +42,14 @@ pub fn cache_query(cache_type: &QueryType) -> Result<String> {
 
 pub fn db_query(db_type: &QueryType) -> Result<String> {
     match db_type {
-        QueryType::Default(_, _) => {
+        QueryType::Default(_, b) if b == &EngineType::Local => {
             let db = LocalDbQuery {};
             db.db_query(&1)
+        }
+
+        QueryType::Default(_, b) if b == &EngineType::MySql => {
+            let db = MySqlDbQuery {};
+            db.db_query(&"1".to_string())
         }
         _ => anyhow::bail!("db not found"),
     }
@@ -56,7 +67,7 @@ pub fn query_order<T, R>(engine: &QueryEngine<T, R>, id: &T) -> Result<R> {
 }
 
 #[test]
-fn test_query() -> Result<()> {
+fn test_query_local_local() -> Result<()> {
     let query_engine = QueryEngine {
         cache: cache_query,
         db: db_query,
@@ -66,7 +77,73 @@ fn test_query() -> Result<()> {
         &query_engine,
         &QueryType::Default(EngineType::Local, EngineType::Local),
     )?;
-    assert_eq!(result, String::from("cache"));
+    assert_eq!(result, String::from("cache from local"));
 
+    Ok(())
+}
+
+#[test]
+fn test_query_redis_mysql() -> Result<()> {
+    let query_engine = QueryEngine {
+        cache: cache_query,
+        db: db_query,
+    };
+
+    let result = query_order(
+        &query_engine,
+        &QueryType::Default(EngineType::Redis, EngineType::MySql),
+    )?;
+    assert_eq!(result, String::from("cache from redis"));
+
+    Ok(())
+}
+
+#[test]
+fn test_query_other_mysql() -> Result<()> {
+    let query_engine = QueryEngine {
+        cache: cache_query,
+        db: db_query,
+    };
+
+    let result = query_order(
+        &query_engine,
+        &QueryType::Default(EngineType::Other, EngineType::MySql),
+    )?;
+    assert_eq!(result, String::from("db from mysql"));
+
+    Ok(())
+}
+
+#[test]
+fn test_query_other_oracle() -> Result<()> {
+    let query_engine = QueryEngine {
+        cache: cache_query,
+        db: db_query,
+    };
+
+    match query_order(
+        &query_engine,
+        &QueryType::Default(EngineType::Other, EngineType::Oracle),
+    ) {
+        Err(e) => assert_eq!(e.to_string(), "Database query failed"),
+        Ok(_) => {}
+    }
+    Ok(())
+}
+
+#[test]
+fn test_query_other_other() -> Result<()> {
+    let query_engine = QueryEngine {
+        cache: cache_query,
+        db: db_query,
+    };
+
+    match query_order(
+        &query_engine,
+        &QueryType::Default(EngineType::Other, EngineType::Other),
+    ) {
+        Err(e) => assert_eq!(e.to_string(), "Database query failed"),
+        Ok(_) => {}
+    }
     Ok(())
 }

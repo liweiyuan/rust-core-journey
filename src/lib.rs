@@ -1,2 +1,4 @@
+// 引入 query 模块
 mod query;
-pub use query::{cache_query, db_query, query_order, EngineType, QueryEngine, QueryType};
+// 直接从 query 模块导入所有需要的内容
+pub use query::*;

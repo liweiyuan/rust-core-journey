@@ -10,7 +10,19 @@ impl DbQuery<i32, String> for LocalDbQuery {
         if *id == 1 {
             Ok(String::from("db from local"))
         } else {
-            anyhow::bail!("db not found")
+            anyhow::bail!("mysql not found")
+        }
+    }
+}
+
+pub struct MySqlDbQuery;
+
+impl DbQuery<String, String> for MySqlDbQuery {
+    fn db_query(&self, str: &String) -> Result<String> {
+        if str == "1" {
+            Ok(String::from("db from mysql"))
+        } else {
+            anyhow::bail!("mysql not found")
         }
     }
 }
