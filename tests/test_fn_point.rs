@@ -3,7 +3,9 @@
 ///
 ///
 use anyhow::Result;
-use rust_core_journey::{cache_query, db_query, query_order, EngineType, QueryEngine, QueryType};
+use rust_core_journey::{
+    cache_query, db_query, query_order, EngineType, QueryConfig, QueryEngine, QueryType,
+};
 #[test]
 fn test_query() -> Result<()> {
     let query_engine = QueryEngine {
@@ -11,25 +13,30 @@ fn test_query() -> Result<()> {
         db: db_query,
     };
 
+    let cfg = QueryConfig {
+        cache_type: EngineType::Local,
+        db_type: EngineType::Local,
+    };
+
     //传递的是引用
     assert_eq!(
-        query_order(
-            &query_engine,
-            &QueryType::Default(EngineType::Local, EngineType::Local)
-        )?,
+        query_order(&query_engine, &QueryType::Default(cfg))?,
         String::from("cache from local")
     );
+
+    let cfg = QueryConfig {
+        cache_type: EngineType::Local,
+        db_type: EngineType::MySql,
+    };
     assert_eq!(
-        query_order(
-            &query_engine,
-            &QueryType::Default(EngineType::Local, EngineType::Local)
-        )?,
+        query_order(&query_engine, &QueryType::Default(cfg))?,
         String::from("cache from local")
     );
-    match query_order(
-        &query_engine,
-        &QueryType::Default(EngineType::Local, EngineType::Local),
-    ) {
+    let cfg = QueryConfig {
+        cache_type: EngineType::Local,
+        db_type: EngineType::Local,
+    };
+    match query_order(&query_engine, &QueryType::Default(cfg)) {
         Err(e) => assert_eq!(e.to_string(), "Database query failed"),
         Ok(_) => {}
     }
