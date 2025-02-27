@@ -2,3 +2,6 @@
 mod query;
 // 直接从 query 模块导入所有需要的内容
 pub use query::*;
+
+mod data;
+pub use data::*;

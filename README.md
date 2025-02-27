@@ -9,3 +9,8 @@
 ```bash
    cat tests/test_bytes.rs
 ```
+---
+- serde库
+```
+   cat src/data/point.rs
+```
