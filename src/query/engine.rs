@@ -27,29 +27,39 @@ pub enum QueryType {
 }
 
 pub fn cache_query(cache_type: &QueryType) -> Result<String> {
+    //定义一个处理缓存查询的函数
+    fn handle_cache_query<T: CacheQuery<K, String>, K>(cache: T, id: K) -> Result<String> {
+        cache.cache_query(&id)
+    }
+
     match cache_type {
         QueryType::Default(a, _) if a == &EngineType::Local => {
             let cache = LocalCacheQuery {};
-            cache.cache_query(&1)
+            handle_cache_query(cache, 1)
         }
         QueryType::Default(a, _) if a == &EngineType::Redis => {
             let cache = RedisCacheQuery {};
-            cache.cache_query(&"1".to_string())
+            handle_cache_query(cache, "1".to_string())
         }
         _ => Err(anyhow::anyhow!("not supported cache type")),
     }
 }
 
 pub fn db_query(db_type: &QueryType) -> Result<String> {
+    //定义一个处理数据库查询的函数
+    fn handle_db_query<T: DbQuery<K, String>, K>(db: T, id: K) -> Result<String> {
+        db.db_query(&id)
+    }
+
     match db_type {
         QueryType::Default(_, b) if b == &EngineType::Local => {
             let db = LocalDbQuery {};
-            db.db_query(&1)
+            handle_db_query(db, 1)
         }
 
         QueryType::Default(_, b) if b == &EngineType::MySql => {
             let db = MySqlDbQuery {};
-            db.db_query(&"1".to_string())
+            handle_db_query(db, "1".to_string())
         }
         _ => anyhow::bail!("db not found"),
     }
