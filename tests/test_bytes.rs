@@ -114,8 +114,8 @@ mod tests {
         write_file(output_path.to_str().unwrap(), &data)?;
 
         // 验证输出文件内容
-        let output_data = read_file(output_path)?;
-        assert_eq!(output_data, b"HELLO, WORLD!");
+        let output_data = read_file(output_path.to_str().unwrap())?;
+        assert_eq!(output_data, BytesMut::from(&b"HELLO, WORLD!"[..]));
 
         // 可选：清理临时文件（NamedTempFile 会在析构时自动删除）
         Ok(())
