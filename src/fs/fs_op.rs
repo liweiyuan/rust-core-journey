@@ -24,6 +24,21 @@ mod tests {
         write_file(path, content).await?;
         let read_content = read_file(path).await?;
         assert_eq!(content, read_content);
+
+        // 删除测试文件
+        fs::remove_file(path).await?;
+        Ok(())
+    }
+
+    //使用临时文件来进行测试
+    #[tokio::test]
+    async fn test_write_read_temp_file() -> Result<()> {
+        let content = "test";
+        let binding = tempfile::NamedTempFile::new()?;
+        let path = binding.path().to_str().unwrap();
+        write_file(path, content).await?;
+        let read_content = read_file(path).await?;
+        assert_eq!(content, read_content);
         Ok(())
     }
 }
