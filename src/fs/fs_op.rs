@@ -4,12 +4,12 @@ use tokio::{
     io::{AsyncReadExt, AsyncWriteExt, BufReader, BufWriter},
 };
 
-async fn read_file(path: &str) -> Result<String> {
+async fn _read_file(path: &str) -> Result<String> {
     let file = fs::read(path).await?;
     Ok(String::from_utf8_lossy(&file).to_string())
 }
 
-async fn write_file(path: &str, content: &str) -> Result<()> {
+async fn _write_file(path: &str, content: &str) -> Result<()> {
     let mut file = fs::File::create(path).await?;
     file.write_all(content.as_bytes()).await?;
     file.flush().await?;
@@ -17,7 +17,7 @@ async fn write_file(path: &str, content: &str) -> Result<()> {
 }
 
 /// 流式读文件
-async fn read_file_stream(path: &str) -> Result<String> {
+async fn _read_file_stream(path: &str) -> Result<String> {
     let file = fs::File::open(path).await?;
     let mut reader = BufReader::new(file);
     let mut buf = Vec::new();
@@ -26,7 +26,7 @@ async fn read_file_stream(path: &str) -> Result<String> {
 }
 
 /// 流式写文件
-async fn write_file_stream(path: &str, content: &str) -> Result<()> {
+async fn _write_file_stream(path: &str, content: &str) -> Result<()> {
     let mut file = fs::File::create(path).await?;
     let mut writer = BufWriter::new(&mut file);
     writer.write_all(content.as_bytes()).await?;
@@ -42,8 +42,8 @@ mod tests {
     async fn test_write_read_file() -> Result<()> {
         let content = "test";
         let path = "test.txt";
-        write_file(path, content).await?;
-        let read_content = read_file(path).await?;
+        _write_file(path, content).await?;
+        let read_content = _read_file(path).await?;
         assert_eq!(content, read_content);
 
         // 删除测试文件
@@ -57,8 +57,8 @@ mod tests {
         let content = "test";
         let binding = tempfile::NamedTempFile::new()?;
         let path = binding.path().to_str().unwrap();
-        write_file(path, content).await?;
-        let read_content = read_file(path).await?;
+        _write_file(path, content).await?;
+        let read_content = _read_file(path).await?;
         assert_eq!(content, read_content);
         Ok(())
     }
@@ -67,8 +67,8 @@ mod tests {
     async fn test_write_read_stream() -> Result<()> {
         let content = "test";
         let path = "test_stream.txt";
-        write_file_stream(path, content).await?;
-        let read_content = read_file_stream(path).await?;
+        _write_file_stream(path, content).await?;
+        let read_content = _read_file_stream(path).await?;
         assert_eq!(content, read_content);
         fs::remove_file(path).await?;
         Ok(())
@@ -80,8 +80,8 @@ mod tests {
         let content = "test";
         let binding = tempfile::NamedTempFile::new()?;
         let path = binding.path().to_str().unwrap();
-        write_file_stream(path, content).await?;
-        let read_content = read_file_stream(path).await?;
+        _write_file_stream(path, content).await?;
+        let read_content = _read_file_stream(path).await?;
         assert_eq!(content, read_content);
         Ok(())
     }
